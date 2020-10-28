@@ -1,5 +1,4 @@
 import os
-import warnings
 from configparser import ConfigParser
 from itertools import chain
 
@@ -43,12 +42,20 @@ DEVICE = cfg.get('cuda', 'device')
 # Dataset
 transform = tf.Compose([tf.Resize(image_size),
                         tf.RandomCrop(crop_size),
+                        tf.RandomHorizontalFlip(),
+                        tf.RandomVerticalFlip(),
                         tf.ToTensor(),
                         tf.Normalize((.5, .5, .5), (.5, .5, .5))])
 domain_a_dataset = ImageFolder(domain_a_src, transform=transform)
 domain_b_dataset = ImageFolder(domain_b_src, transform=transform)
-domain_a_loader = DataLoader(domain_a_dataset, batch_size=batch_size, shuffle=True, num_workers=4, drop_last=True)
-domain_b_loader = DataLoader(domain_b_dataset, batch_size=batch_size, shuffle=True, num_workers=4, drop_last=True)
+
+loader_args = {"batch_size": batch_size,
+               "shuffle": True,
+               "num_workers": 4,
+               "drop_last": True,
+               "pin_memory": True}
+domain_a_loader = DataLoader(domain_a_dataset, **loader_args)
+domain_b_loader = DataLoader(domain_b_dataset, **loader_args)
 
 # Models
 generator_a = Generator().to(DEVICE)
@@ -60,8 +67,8 @@ discriminator_b = Discriminator().to(DEVICE)
 rec_criterion = torch.nn.MSELoss()
 
 # Optimizer
-g_optimizer = torch.optim.RMSprop(chain(generator_a.parameters(), generator_b.parameters()), lr=5e-5)
-d_optimizer = torch.optim.RMSprop(chain(discriminator_a.parameters(), discriminator_b.parameters()), lr=5e-5)
+g_optimizer = torch.optim.RMSprop(chain(generator_a.parameters(), generator_b.parameters()), lr=1e-4)
+d_optimizer = torch.optim.RMSprop(chain(discriminator_a.parameters(), discriminator_b.parameters()), lr=1e-4)
 
 for e in range(epoch):
     with tqdm(total=min(len(domain_a_loader), len(domain_b_loader)), ncols=200) as progress_bar:
