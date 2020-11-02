@@ -10,7 +10,7 @@ import requests
 
 class ImageStreamer:
     @staticmethod
-    def download(src: str, dst: str):
+    def download(src: str, dst: str) -> None:
         response = requests.get(src)
         print('Downloading from %s [%d]' % (src, response.status_code), end='')
         if response.ok:
@@ -23,6 +23,6 @@ class ImageStreamer:
             print('[Failed]')
         time.sleep(1)
 
-    def parallel_download(self, src_list: Union[list, tuple], dst: str, num_workers: int = 1):
+    def parallel_download(self, src_list: Union[list, tuple], dst: str, num_workers: int = 1) -> None:
         with Pool(processes=num_workers) as p:
             p.map(partial(self.download, dst=dst), src_list)
