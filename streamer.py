@@ -24,7 +24,5 @@ class ImageStreamer:
         time.sleep(1)
 
     def parallel_download(self, src_list: Union[list, tuple], dst: str, num_workers: int = 1):
-        p = Pool(processes=num_workers)
-        p.map(partial(self.download, dst=dst), src_list)
-        p.close()
-        p.join()
+        with Pool(processes=num_workers) as p:
+            p.map(partial(self.download, dst=dst), src_list)

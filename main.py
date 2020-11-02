@@ -67,8 +67,8 @@ discriminator_b = Discriminator().to(DEVICE)
 rec_criterion = torch.nn.MSELoss()
 
 # Optimizer
-g_optimizer = torch.optim.RMSprop(chain(generator_a.parameters(), generator_b.parameters()), lr=1e-4)
-d_optimizer = torch.optim.RMSprop(chain(discriminator_a.parameters(), discriminator_b.parameters()), lr=1e-4)
+g_optimizer = torch.optim.Adam(chain(generator_a.parameters(), generator_b.parameters()), lr=1e-4)
+d_optimizer = torch.optim.Adam(chain(discriminator_a.parameters(), discriminator_b.parameters()), lr=1e-4)
 
 for e in range(epoch):
     with tqdm(total=min(len(domain_a_loader), len(domain_b_loader)), ncols=200) as progress_bar:
@@ -148,15 +148,15 @@ for e in range(epoch):
             progress_bar.update()
 
         # Sampling
-        sample = torch.cat((fake_a_image[:sample_size], domain_b_image[:sample_size],
-                            fake_b_image[:sample_size], domain_a_image[:sample_size]), 0)
+        sample = torch.cat((domain_b_image[:sample_size], fake_a_image[:sample_size],
+                            domain_a_image[:sample_size], fake_b_image[:sample_size]), 0)
         save_image(sample, os.path.join(sample_src, '%04d.png' % e), nrow=sample_size)
 
-        if e % save_per_epoch == 0:
+        if e % save_per_epoch == 0 or e == epoch - 1:
             # Save models
             torch.save({'epoch': e,
                         'generator_a': generator_a.state_dict(),
                         'generator_b': generator_b.state_dict(),
                         'discriminator_a': discriminator_a.state_dict(),
                         'discriminator_b': discriminator_b.state_dict()},
-                       os.path.join(model_src, 'cyclegan.pkl'))
+                       os.path.join(model_src, 'cyclegan_ab.pkl'))

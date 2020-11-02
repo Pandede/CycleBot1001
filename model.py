@@ -13,16 +13,16 @@ class Generator(nn.Module):
         self.postfix_layers = nn.Sequential(self.conv_block(32, 16),
                                             self.conv_block(16, 8),
                                             self.conv_block(8, 4))
-        self.output_layer = nn.Conv2d(4, 3, 3, padding=1)
+        self.output_layer = nn.Conv2d(4, 3, 1)
 
     @staticmethod
-    def conv_block(in_channels: int, out_channels: int):
+    def conv_block(in_channels: int, out_channels: int) -> nn.Module:
         return nn.Sequential(nn.ReflectionPad2d(1),
                              nn.Conv2d(in_channels, out_channels, kernel_size=3),
                              nn.BatchNorm2d(out_channels, momentum=.8),
                              nn.ReLU(inplace=True))
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         prefix = self.prefix_layers(x)
         core = self.core_layers(prefix)
         postfix = self.postfix_layers(core)
@@ -34,7 +34,7 @@ class ResidualBlock(nn.Module):
         super(ResidualBlock, self).__init__()
         self.res_block = Generator.conv_block(channels, channels)
 
-    def forward(self, x):
+    def forward(self, x) -> torch.Tensor:
         return x + self.res_block(x)
 
 
@@ -50,11 +50,11 @@ class Discriminator(nn.Module):
         self.output = nn.Linear(8 * 7 * 7, 1)
 
     @staticmethod
-    def __conv_block(in_channels: int, out_channels: int):
+    def __conv_block(in_channels: int, out_channels: int) -> nn.Module:
         return nn.Sequential(nn.Conv2d(in_channels, out_channels, 3, stride=2),
                              nn.LeakyReLU(.2, inplace=True))
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         h = self.conv1(x)
         h = self.conv2(h)
         h = self.conv3(h)
