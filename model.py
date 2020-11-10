@@ -6,14 +6,14 @@ class Generator(nn.Module):
     def __init__(self):
         super(Generator, self).__init__()
 
-        self.prefix_layers = nn.Sequential(self.conv_block(3, 8),
-                                           self.conv_block(8, 16),
-                                           self.conv_block(16, 32))
-        self.core_layers = nn.Sequential(*[ResidualBlock(32) for _ in range(5)])
-        self.postfix_layers = nn.Sequential(self.conv_block(32, 16),
-                                            self.conv_block(16, 8),
-                                            self.conv_block(8, 4))
-        self.output_layer = nn.Conv2d(4, 3, 1)
+        self.prefix_layers = nn.Sequential(self.conv_block(3, 16),
+                                           self.conv_block(16, 32),
+                                           self.conv_block(32, 64))
+        self.core_layers = nn.Sequential(*[ResidualBlock(64) for _ in range(5)])
+        self.postfix_layers = nn.Sequential(self.conv_block(64, 32),
+                                            self.conv_block(32, 16),
+                                            self.conv_block(16, 8))
+        self.output_layer = nn.Conv2d(8, 3, 1)
 
     @staticmethod
     def conv_block(in_channels: int, out_channels: int) -> nn.Module:

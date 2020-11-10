@@ -26,9 +26,9 @@ crop_size = cfg.getint('default', 'crop_size')
 image_channel = cfg.getint('default', 'img_channel')
 batch_size = cfg.getint('default', 'batch_size')
 
-lambda_adv_loss = cfg.getfloat('loss', 'lambda_adv_loss')
-lambda_cycle_loss = cfg.getfloat('loss', 'lambda_cycle_loss')
-lambda_idt_loss = cfg.getfloat('loss', 'lambda_idt_loss')
+lambda_a = cfg.getfloat('loss', 'lambda_a')
+lambda_b = cfg.getfloat('loss', 'lambda_b')
+lambda_idt = cfg.getfloat('loss', 'lambda_idt')
 
 domain_a_src = cfg.get('path', 'domain_A_src')
 domain_b_src = cfg.get('path', 'domain_B_src')
@@ -67,8 +67,8 @@ discriminator_b = Discriminator().to(DEVICE)
 rec_criterion = torch.nn.MSELoss()
 
 # Optimizer
-g_optimizer = torch.optim.Adam(chain(generator_a.parameters(), generator_b.parameters()), lr=1e-4)
-d_optimizer = torch.optim.Adam(chain(discriminator_a.parameters(), discriminator_b.parameters()), lr=1e-4)
+g_optimizer = torch.optim.RMSprop(chain(generator_a.parameters(), generator_b.parameters()), lr=5e-5)
+d_optimizer = torch.optim.RMSprop(chain(discriminator_a.parameters(), discriminator_b.parameters()), lr=5e-5)
 
 for e in range(epoch):
     with tqdm(total=min(len(domain_a_loader), len(domain_b_loader)), ncols=200) as progress_bar:
@@ -132,9 +132,9 @@ for e in range(epoch):
 
             g_optimizer.zero_grad()
             (
-                    (ga_adv_loss + gb_adv_loss) * lambda_adv_loss +
-                    (ga_cycle_loss + gb_cycle_loss) * lambda_cycle_loss +
-                    (ga_idt_loss + gb_idt_loss) * lambda_idt_loss
+                    ga_adv_loss + gb_adv_loss +
+                    ga_cycle_loss * lambda_a + gb_cycle_loss * lambda_b +
+                    ga_idt_loss * lambda_b * lambda_idt + gb_idt_loss * lambda_a * lambda_idt
             ).backward()
             g_optimizer.step()
 
@@ -150,7 +150,7 @@ for e in range(epoch):
         # Sampling
         sample = torch.cat((domain_b_image[:sample_size], fake_a_image[:sample_size],
                             domain_a_image[:sample_size], fake_b_image[:sample_size]), 0)
-        save_image(sample, os.path.join(sample_src, '%04d.png' % e), nrow=sample_size)
+        save_image(sample, os.path.join(sample_src, '%04d.png' % e), nrow=min(batch_size, sample_size))
 
         if e % save_per_epoch == 0 or e == epoch - 1:
             # Save models
