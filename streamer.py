@@ -11,7 +11,7 @@ from PIL import Image
 
 
 class ImageStreamer:
-    def __init__(self, size: Union[int, tuple, None] = None):
+    def __init__(self, size: Union[int, tuple, list, None] = None):
         if isinstance(size, int):
             size = (size, size)
         assert len(size) == 2 or size is None, 'Invalid size'
@@ -35,6 +35,7 @@ class ImageStreamer:
             print('[Failed]')
         time.sleep(delay)
 
-    def parallel_download(self, src_list: Union[list, tuple], dst: str, num_workers: int = 1, delay: float = 1.) -> None:
+    def parallel_download(self, src_list: Union[list, tuple], dst: str, num_workers: int = 1,
+                          delay: float = 1.) -> None:
         with Pool(processes=num_workers) as p:
             p.map(partial(self.download, dst=dst, delay=delay), src_list)

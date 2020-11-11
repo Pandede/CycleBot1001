@@ -1,6 +1,7 @@
 import os
-from typing import Union, Tuple, Dict
+from typing import Union, Dict, Tuple, List
 
+import numpy as np
 import torch
 import torch.multiprocessing as mp
 import torchvision.transforms as tf
@@ -74,8 +75,61 @@ class Stylizer:
         styled_name = os.path.join(dst, os.path.basename(src))
         with torch.no_grad():
             for i, batch in enumerate(loader):
-                styled_video[i*batch_size:(i+1)*batch_size] = self.render(batch[0]).cpu()
+                styled_video[i * batch_size:(i + 1) * batch_size] = self.render(batch[0]).cpu()
                 print('%d/%d' % (i, len(loader)))
 
         styled_video = styled_video.permute((0, 2, 3, 1)) * 127.5 + 127.5
         write_video(styled_name, styled_video, float(info['video_fps']))
+
+
+class Slice:
+    @staticmethod
+    def apply(images: Tuple[np.ndarray, ...],
+              breakpoints: Union[np.ndarray, Tuple[int], List[int]],
+              axis: int = 1) -> np.ndarray:
+        assert len(images) == len(breakpoints) - 1, 'The (number of breakpoints) must equal to (number of images - 1)'
+        h, w, c = images[0].shape
+        assert all(i.shape == (h, w, c) for i in images), 'All images must have identical dimensions'
+
+        result = np.empty_like(images[0])
+        pts = [breakpoints[i:i + 2] for i in range(len(breakpoints) - 1)]
+
+        for i, (p0, p1) in enumerate(pts):
+            fill_axis = (slice(None), slice(p0, p1)) if axis else (slice(p0, p1), slice(None))
+            result[fill_axis] = images[i][fill_axis]
+
+        return result
+
+
+class GradientSlice:
+    @classmethod
+    def apply(cls,
+              images: Tuple[np.ndarray, ...],
+              breakpoints: Union[np.ndarray, Tuple[int], List[int]],
+              axis: int = 1) -> np.ndarray:
+        assert len(images) == len(breakpoints) // 2, 'The (number of breakpoints) must equal to (number of images * 2)'
+        h, w, c = images[0].shape
+        assert all(i.shape == (h, w, c) for i in images), 'All images must have identical dimensions'
+
+        result = np.empty_like(images[0])
+        pts = [breakpoints[i:i + 2] for i in range(len(breakpoints) - 1)]
+
+        for i, (p0, p1) in enumerate(pts[::2]):
+            fill_axis = (slice(None), slice(p0, p1)) if axis else (slice(p0, p1), slice(None))
+            result[fill_axis] = images[i][fill_axis]
+
+        for i, (p0, p1) in enumerate(pts[1::2]):
+            fill_axis = (slice(None), slice(p0, p1)) if axis else (slice(p0, p1), slice(None))
+            result[fill_axis] = cls.blend(images[i][fill_axis],
+                                          images[i + 1][fill_axis],
+                                          axis)
+
+        return result
+
+    @staticmethod
+    def blend(img1: np.ndarray, img2: np.ndarray, axis: int) -> np.ndarray:
+        assert img1.shape == img2.shape
+        h, w, _ = img1.shape
+        g = np.linspace(0, 1, w if axis else h)
+        subscripts = 'ijk,%s->ijk' % ('j' if axis else 'i')
+        return np.einsum(subscripts, img1, 1 - g) + np.einsum(subscripts, img2, g)
