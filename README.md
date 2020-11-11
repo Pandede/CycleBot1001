@@ -108,7 +108,10 @@ stylizer.render_video(file_name, './Output/', num_workers=8)
 ```
 
 ## Result
-#### Original
-![](./assets/heidelberg_castle.jpg)
-#### Rendered
-![](./assets/styled_heidelberg_castle.jpg)
+Several filters are implemented in `rendered.py` for combining the original and rendered images
+| Image              | Description                            | Example                                                                                                             |
+|--------------------|----------------------------------------|---------------------------------------------------------------------------------------------------------------------|
+| Original           | The genuine image                      | <img src="https://github.com/Pandede/CycleBot1001/blob/master/assets/heidelberg_castle.jpg" width="300px">          |
+| Rendered           | The image which rendered by GAN        | <img src="https://github.com/Pandede/CycleBot1001/blob/master/assets/styled_heidelberg_castle.jpg" width="300px">   |
+| **Slice**          | Combine the images simply              | <img src="https://github.com/Pandede/CycleBot1001/blob/master/assets/slice_heidelberg_castle.jpg" width="300px">    |
+| **Gradient Slice** | Combine the images with gradient blend | <img src="https://github.com/Pandede/CycleBot1001/blob/master/assets/gradient_heidelberg_castle.jpg" width="300px"> |
