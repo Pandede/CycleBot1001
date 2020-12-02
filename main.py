@@ -18,6 +18,7 @@ cfg = ConfigParser()
 cfg.read('./config.ini')
 
 # Parameters
+model_name = cfg.get('default', 'name')
 epoch = cfg.getint('default', 'epoch')
 save_per_epoch = cfg.getint('default', 'save_per_epoch')
 sample_size = cfg.getint('default', 'sample_size')
@@ -67,8 +68,8 @@ discriminator_b = Discriminator().to(DEVICE)
 rec_criterion = torch.nn.MSELoss()
 
 # Optimizer
-g_optimizer = torch.optim.RMSprop(chain(generator_a.parameters(), generator_b.parameters()), lr=5e-5)
-d_optimizer = torch.optim.RMSprop(chain(discriminator_a.parameters(), discriminator_b.parameters()), lr=5e-5)
+g_optimizer = torch.optim.RMSprop(chain(generator_a.parameters(), generator_b.parameters()), lr=1e-4)
+d_optimizer = torch.optim.RMSprop(chain(discriminator_a.parameters(), discriminator_b.parameters()), lr=1e-4)
 
 for e in range(epoch):
     with tqdm(total=min(len(domain_a_loader), len(domain_b_loader)), ncols=200) as progress_bar:
@@ -155,8 +156,8 @@ for e in range(epoch):
         if e % save_per_epoch == 0 or e == epoch - 1:
             # Save models
             torch.save({'epoch': e,
-                        'generator_a': generator_a.state_dict(),
-                        'generator_b': generator_b.state_dict(),
-                        'discriminator_a': discriminator_a.state_dict(),
-                        'discriminator_b': discriminator_b.state_dict()},
-                       os.path.join(model_src, 'cyclegan_ab.pkl'))
+                        'generator_a': generator_a,
+                        'generator_b': generator_b,
+                        'discriminator_a': discriminator_a,
+                        'discriminator_b': discriminator_b},
+                       os.path.join(model_src, '%s.pkl' % model_name))

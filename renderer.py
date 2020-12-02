@@ -10,14 +10,11 @@ from torch.utils.data import TensorDataset, DataLoader
 from torchvision.io import read_video, write_video
 from torchvision.utils import save_image
 
-from model import Generator
-
 
 class Stylizer:
     def __init__(self, g_src: str, domain: str = 'b', device='cpu'):
         model_data = torch.load(g_src, map_location=device)
-        self.generator = Generator().to(device)
-        self.generator.load_state_dict(model_data['generator_%s' % domain])
+        self.generator = model_data['generator_%s' % domain].to(device)
         self.generator.eval()
 
         self.image_transforms = tf.Compose([tf.ToTensor(),

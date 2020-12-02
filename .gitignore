@@ -142,4 +142,4 @@ cython_debug/
 !/Data/
 !/Sample/
 !/Pickle/
-/playground.py
+!/playground.py
